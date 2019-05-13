@@ -16,6 +16,8 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 	BOOL reverse);
 void Drawing_b_CIRCLE(HDC hdc, int cx, int cy, int radius, COLORREF colour, object_polygon* p_poly, BOOL save,
 	BOOL reverse);
+void Drawing_b_RECT(HDC hdc, int sx, int sy, int fx, int fy, COLORREF colour, object_polygon* p_poly, BOOL save,
+	BOOL reverse);
 void Drawing_RECT();
 void ERASER();
 void UNDO();

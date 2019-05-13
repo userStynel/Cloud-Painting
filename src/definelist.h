@@ -3,6 +3,7 @@
 
 #define MENU_FILE_OPEN 10
 #define MENU_FILE_SAVE 11
+#define CHANGING_SIZE 15
 
 #define MENU_MULTI_CREATE 12
 #define MENU_MULTI_JOIN 13

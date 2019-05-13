@@ -140,7 +140,7 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 		dx = x - sx;
 		dy = abs(y - sy);
 		d = 2 * dy - dx;
-		for (int i = sx; i <= x; i++)
+		for (int i = sx+1; i <= x; i++)
 		{
 			if (save)
 			{
@@ -179,7 +179,7 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 		dx = abs(x - sx);
 		dy = y - sy;
 		d = 2 * dx - dy;
-		for (int i = sy; i <= y; i++)
+		for (int i = sy+1; i <= y; i++)
 		{
 			if (save)
 			{
@@ -198,4 +198,13 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 				d += 2 * dx;
 		}
 	}
+}
+
+void Drawing_b_RECT(HDC hdc, int sx, int sy, int fx, int fy, COLORREF colour, object_polygon* p_poly, BOOL save,
+	BOOL reverse)
+{
+	Drawing_b_LINE(hdc, sx, sy, sx, fy, colour, p_poly, save, reverse);
+	Drawing_b_LINE(hdc, sx, fy, fx, fy, colour, p_poly, save, reverse);
+	Drawing_b_LINE(hdc, fx, fy, fx, sy, colour, p_poly, save, reverse);
+	Drawing_b_LINE(hdc, fx, sy, sx, sy, colour, p_poly, save, reverse);
 }

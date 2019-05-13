@@ -15,6 +15,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK COLORPanelProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK CSZPROC(HWND, UINT, WPARAM, LPARAM);
 
 COLORREF gColor = RGB(255, 255, 255);
 HINSTANCE hinstance;
@@ -87,6 +88,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				LoginBox(hwnd, &check_login, hinstance);
 
 		}
+		if (LOWORD(wParam) == CHANGING_SIZE)
+			CGSZBOX(hwnd, hinstance);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -192,8 +195,8 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				SetROP2(hdc, R2_NOT);
 				if (now_mode == MODE_RECT)
 				{
-					Rectangle(hdc, sx, sy, oldx, oldy);
-					Rectangle(hdc, sx, sy, now_x, now_y);
+					Drawing_b_RECT(hdc, sx, sy, oldx, oldy, gColor, NULL, FALSE, FALSE);
+					Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, NULL, FALSE, FALSE);
 				}
 				else if (now_mode == MODE_LINE)
 				{
@@ -226,7 +229,16 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			now_x = LOWORD(lParam);
 			now_y = HIWORD(lParam);
 			if (now_mode == MODE_RECT)
-				Rectangle(hdc, sx, sy, now_x, now_y);
+			{
+				if (new_node == NULL)
+				{
+					Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, head_saving_path->next, TRUE, TRUE);
+				}
+				else
+				{
+					Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, new_node, TRUE, TRUE);
+				}
+			}
 			else if (now_mode == MODE_LINE)
 			{
 				if (new_node == NULL)
@@ -255,6 +267,34 @@ LRESULT CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		CreateWindowW(L"button", L"·Î±×ÀÎ",
 			WS_VISIBLE | WS_CHILD,
 			50, 50, 80, 25, hwnd, (HMENU)1, NULL, NULL);
+		break;
+	case WM_COMMAND:
+		DestroyWindow(hwnd);
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
+		break;
+	}
+	return(DefWindowProc(hwnd, msg, wParam, lParam));
+}
+
+LRESULT CALLBACK CSZPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_CREATE:
+		CreateWindowW(L"button", L"32px",
+			WS_VISIBLE | WS_CHILD,
+			50, 30, 30, 25, hwnd, (HMENU)1, NULL, NULL);
+		CreateWindowW(L"button", L"64px",
+			WS_VISIBLE | WS_CHILD,
+			85, 30, 30, 25, hwnd, (HMENU)1, NULL, NULL);
+		CreateWindowW(L"button", L"128px",
+			WS_VISIBLE | WS_CHILD,
+			115, 30, 30, 25, hwnd, (HMENU)1, NULL, NULL);
+		CreateWindowW(L"button", L"256px",
+			WS_VISIBLE | WS_CHILD,
+			150, 30, 30, 25, hwnd, (HMENU)1, NULL, NULL);
 		break;
 	case WM_COMMAND:
 		DestroyWindow(hwnd);

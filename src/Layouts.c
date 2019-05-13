@@ -6,6 +6,7 @@ extern COLORREF gColor;
 extern LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM);
 extern LRESULT CALLBACK COLORPanelProc(HWND, UINT, WPARAM, LPARAM);
 extern LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+extern LRESULT CALLBACK CSZPROC(HWND, UINT, WPARAM, LPARAM);
 
 COLORREF ShowColorDialog(HWND hwnd)
 {
@@ -47,6 +48,7 @@ void AddMenus(HWND hwnd)
 
 	AppendMenuW(hADDONMenu, MF_STRING, 3, L"&네비게이션");
 	AppendMenuW(hADDONMenu, MF_STRING, 1, L"&레이어");
+	AppendMenuW(hADDONMenu, MF_STRING, CHANGING_SIZE, L"&크기변경");
 
 	AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hFILEMenu, L"&파일");
 	AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hADDONMenu, L"&애드온");
@@ -128,5 +130,20 @@ void LoginBox(HWND hwnd, BOOL* check_login, HINSTANCE hinstance)
 
 	CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"DialogClass", L"로그인",
 		WS_VISIBLE | WS_SYSMENU | WS_CAPTION, 100, 100, 200, 150,
+		NULL, NULL, hinstance, NULL);
+}
+
+void CGSZBOX(HWND hwnd, HINSTANCE hinstance)
+{
+	WNDCLASSEXW wc = { 0 };
+	wc.cbSize = sizeof(WNDCLASSEXW);
+	wc.lpfnWndProc = (WNDPROC)CSZPROC;
+	wc.hInstance = hinstance;
+	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+	wc.lpszClassName = L"CGBOXCLASS";
+	RegisterClassExW(&wc);
+
+	CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"CGBOXCLASS", L"사이즈 변경",
+		WS_VISIBLE | WS_SYSMENU | WS_CAPTION, 100, 100, 200, 200,
 		NULL, NULL, hinstance, NULL);
 }
