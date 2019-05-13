@@ -140,7 +140,7 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 		dx = x - sx;
 		dy = abs(y - sy);
 		d = 2 * dy - dx;
-		for (int i = sx+1; i <= x; i++)
+		for (int i = sx; i <= x; i++)
 		{
 			if (save)
 			{
@@ -179,7 +179,7 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 		dx = abs(x - sx);
 		dy = y - sy;
 		d = 2 * dx - dy;
-		for (int i = sy+1; i <= y; i++)
+		for (int i = sy; i <= y; i++)
 		{
 			if (save)
 			{
