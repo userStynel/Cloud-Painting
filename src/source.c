@@ -140,7 +140,8 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 		if (now_mode == MODE_FILL)
 			ADD_PATH(recent_node, -1, -1, GetPixel(hdc, sx, sy), gColor);
-		ADD_PATH(recent_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
+		if(now_mode != MODE_CIRCLE)
+			ADD_PATH(recent_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
 
 		if(now_mode == MODE_FILL)
 		{
@@ -150,7 +151,7 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			ExtFloodFill(hdc, sx, sy, GetPixel(hdc, sx, sy), FLOODFILLSURFACE);
 			DeleteObject(fillbrush);
 		}
-		else
+		else if(now_mode != MODE_CIRCLE)
 			SetPixel(hdc, sx, sy, gColor);
 		ReleaseDC(hwnd, hdc);
 		break;
@@ -166,9 +167,8 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			{
 				Drawing_b_LINE(hdc, oldx, oldy, now_x, now_y, gColor, recent_node, TRUE, FALSE);
 			}
-			else if (now_mode == MODE_RECT || now_mode == MODE_LINE)
+			else if (now_mode == MODE_RECT || now_mode == MODE_LINE || now_mode == MODE_CIRCLE)
 			{
-				SelectObject(hdc, GetStockObject(NULL_BRUSH));
 				SetROP2(hdc, R2_NOT);
 				if (now_mode == MODE_RECT)
 				{
@@ -182,9 +182,8 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				}
 				else if (now_mode == MODE_CIRCLE)
 				{
-					/*
-						* Code for drawing circle
-					*/
+					Drawing_b_CIRCLE(hdc, sx, sy, getRadius(sx, sy, oldx, oldy), gColor, NULL, FALSE, FALSE);
+					Drawing_b_CIRCLE(hdc, sx, sy, getRadius(sx, sy, now_x, now_y), gColor, NULL, FALSE, FALSE);
 				}
 			}
 			oldx = now_x;
@@ -195,7 +194,7 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	case WM_LBUTTONUP:
 		bnowDraw = FALSE;
 		hdc = GetDC(hwnd);
-		if(now_mode == MODE_RECT || now_mode == MODE_LINE)
+		if(now_mode == MODE_RECT || now_mode == MODE_LINE || now_mode == MODE_CIRCLE)
 		{
 			SelectObject(hdc, GetStockObject(NULL_BRUSH));
 			int now_x, now_y;
@@ -205,7 +204,10 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, recent_node, TRUE, TRUE);
 			else if (now_mode == MODE_LINE)
 				Drawing_b_LINE(hdc, sx, sy, now_x, now_y, gColor, recent_node, TRUE, TRUE);
+			else if (now_mode == MODE_CIRCLE)
+				Drawing_b_CIRCLE(hdc, sx, sy, getRadius(sx, sy, now_x, now_y), gColor, recent_node, TRUE, TRUE);
 		}
+		
 		ReleaseDC(hwnd, hdc);
 		break;
 	case WM_DESTROY:

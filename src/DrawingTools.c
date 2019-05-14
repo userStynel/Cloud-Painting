@@ -9,6 +9,7 @@ void swaping(int* x, int* y)
 	*x = *y;
 	*y = temp;
 }
+
 void Drawing_PEN(HDC hdc, int ex_x, int ex_y, int now_x, int now_y)
 {
 	MoveToEx(hdc, ex_x, ex_y, NULL);
@@ -60,7 +61,7 @@ void INIT_POLYGON(object_polygon** h_p_poly, object_polygon** t_p_poly)
 	(*t_p_poly)->path = NULL;
 }
 
-object_polygon* ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_node)
+void ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_node)
 {
 	object_polygon *new_node;
 	new_node = (object_polygon*)malloc(sizeof(object_polygon));
@@ -76,7 +77,6 @@ object_polygon* ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_n
 void UNDO_PEN(object_polygon* p_poly, HWND hwnd)
 {
 	HDC hdc;
-	HPEN hpen;
 	int x, y;
 	polygon_path *searcher = p_poly->path;
 	while (searcher != NULL)
@@ -103,7 +103,6 @@ void UNDO_PEN(object_polygon* p_poly, HWND hwnd)
 void REDO_PEN(object_polygon* p_poly, HWND hwnd)
 {
 	HDC hdc;
-	HPEN hpen;
 	int x, y;
 	polygon_path *searcher = p_poly->path;
 	while (searcher != NULL)
@@ -216,6 +215,64 @@ void Drawing_b_RECT(HDC hdc, int sx, int sy, int fx, int fy, COLORREF colour, ob
 		Drawing_b_LINE(hdc, sx, sy, sx, fy, colour, p_poly, save, reverse);
 		Drawing_b_LINE(hdc, sx + 1, fy, fx, fy, colour, p_poly, save, reverse);
 		Drawing_b_LINE(hdc, fx, fy - 1, fx, sy, colour, p_poly, save, reverse);
-		Drawing_b_LINE(hdc, fx - 1, sy, sx, sy, colour, p_poly, save, reverse);
+		Drawing_b_LINE(hdc, fx - 1, sy, sx+1, sy, colour, p_poly, save, reverse);
 	}
+}
+
+void Drawing_b_CIRCLE(HDC hdc, int cx, int cy, int radius, COLORREF colour, object_polygon* p_poly, BOOL save,
+	BOOL reverse)
+{
+	int h = 1-radius;
+	int x = 0;
+	int y = radius;
+	int deltaE = 3;
+	int deltaNE = 5 - 2 * radius;
+	while (y >= x)
+	{
+		if (save)
+		{
+			ADD_PATH(p_poly, cx + x, cy + y, RGB(255, 255, 255) - GetPixel(hdc, cx + x, cy + y), colour);
+			ADD_PATH(p_poly, cx + y, cy + x, RGB(255, 255, 255) - GetPixel(hdc, cx + y, cy + x), colour);
+			ADD_PATH(p_poly, cx + x, cy - y, RGB(255, 255, 255) - GetPixel(hdc, cx + x, cy - y), colour);
+			ADD_PATH(p_poly, cx - y, cy + x, RGB(255, 255, 255) - GetPixel(hdc, cx - y, cy + x), colour);
+			if (x != 0 || x != y)
+			{
+				ADD_PATH(p_poly, cx + y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx + y, cy - x), colour);
+				ADD_PATH(p_poly, cx - x, cy - y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy - y), colour);
+				ADD_PATH(p_poly, cx - y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx - y, cy - x), colour);
+				ADD_PATH(p_poly, cx - x, cy + y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy + y), colour);
+			}
+		}
+
+		SetPixel(hdc, cx + x, cy + y, colour);
+		SetPixel(hdc, cx + x, cy - y, colour);
+		SetPixel(hdc, cx + y, cy + x, colour);
+		SetPixel(hdc, cx - y, cy + x, colour);
+		if (x != 0 || x != y)
+		{
+			SetPixel(hdc, cx - x, cy - y, colour);
+			SetPixel(hdc, cx - y, cy - x, colour);
+			SetPixel(hdc, cx + y, cy - x, colour);
+			SetPixel(hdc, cx - x, cy + y, colour);
+		}
+		if (h < 0)
+		{
+			h += deltaE;
+			deltaE += 2;
+			deltaNE += 2;
+		}
+		else
+		{
+			h += deltaNE;
+			deltaE += 2;
+			deltaNE += 4;
+			y--;
+		}
+		x++;
+	}
+}
+
+int getRadius(int x1, int y1, int x2, int y2)
+{
+	return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }
