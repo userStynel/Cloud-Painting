@@ -235,25 +235,27 @@ void Drawing_b_CIRCLE(HDC hdc, int cx, int cy, int radius, COLORREF colour, obje
 			ADD_PATH(p_poly, cx + y, cy + x, RGB(255, 255, 255) - GetPixel(hdc, cx + y, cy + x), colour);
 			ADD_PATH(p_poly, cx + x, cy - y, RGB(255, 255, 255) - GetPixel(hdc, cx + x, cy - y), colour);
 			ADD_PATH(p_poly, cx - y, cy + x, RGB(255, 255, 255) - GetPixel(hdc, cx - y, cy + x), colour);
-			if (x != 0 || x != y)
-			{
-				ADD_PATH(p_poly, cx + y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx + y, cy - x), colour);
-				ADD_PATH(p_poly, cx - x, cy - y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy - y), colour);
-				ADD_PATH(p_poly, cx - y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx - y, cy - x), colour);
-				ADD_PATH(p_poly, cx - x, cy + y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy + y), colour);
-			}
+			ADD_PATH(p_poly, cx + y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx + y, cy - x), colour);
+			ADD_PATH(p_poly, cx - x, cy - y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy - y), colour);
+			ADD_PATH(p_poly, cx - y, cy - x, RGB(255, 255, 255) - GetPixel(hdc, cx - y, cy - x), colour);
+			ADD_PATH(p_poly, cx - x, cy + y, RGB(255, 255, 255) - GetPixel(hdc, cx - x, cy + y), colour);
 		}
-
 		SetPixel(hdc, cx + x, cy + y, colour);
 		SetPixel(hdc, cx + x, cy - y, colour);
-		SetPixel(hdc, cx + y, cy + x, colour);
-		SetPixel(hdc, cx - y, cy + x, colour);
-		if (x != 0 || x != y)
+		if (x != y)
 		{
-			SetPixel(hdc, cx - x, cy - y, colour);
-			SetPixel(hdc, cx - y, cy - x, colour);
-			SetPixel(hdc, cx + y, cy - x, colour);
+			SetPixel(hdc, cx + y, cy + x, colour);
+			SetPixel(hdc, cx - y, cy + x, colour);
+		}
+		if (x != 0)
+		{
 			SetPixel(hdc, cx - x, cy + y, colour);
+			SetPixel(hdc, cx - x, cy - y, colour);
+		}
+		if (x != y && x != 0)
+		{
+			SetPixel(hdc, cx + y, cy - x, colour);
+			SetPixel(hdc, cx - y, cy - x, colour);
 		}
 		if (h < 0)
 		{
