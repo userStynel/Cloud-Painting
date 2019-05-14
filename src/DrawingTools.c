@@ -2,6 +2,13 @@
 
 extern COLORREF gColor;
 
+void swaping(int* x, int* y)
+{
+	int temp;
+	temp = *x;
+	*x = *y;
+	*y = temp;
+}
 void Drawing_PEN(HDC hdc, int ex_x, int ex_y, int now_x, int now_y)
 {
 	MoveToEx(hdc, ex_x, ex_y, NULL);
@@ -39,24 +46,31 @@ void ADD_PATH(object_polygon* p_poly, int x, int y, COLORREF c, COLORREF d)
 	}
 }
 
-void INIT_POLYGON(object_polygon** p_poly)
+void INIT_POLYGON(object_polygon** h_p_poly, object_polygon** t_p_poly)
 {
-	(*p_poly)->next = (object_polygon *)malloc(sizeof(object_polygon));
-	(*p_poly)->next->prev = *p_poly;
-	(*p_poly)->next->next = NULL;
-	(*p_poly)->next->path = NULL;
+	*h_p_poly = (object_polygon *)malloc(sizeof(object_polygon));
+	*t_p_poly = (object_polygon *)malloc(sizeof(object_polygon));
+
+	(*h_p_poly)->prev = *h_p_poly;
+	(*h_p_poly)->next = *t_p_poly;
+	(*h_p_poly)->path = NULL;
+
+	(*t_p_poly)->prev = *h_p_poly;
+	(*t_p_poly)->next = *t_p_poly;
+	(*t_p_poly)->path = NULL;
 }
 
-object_polygon* ADD_POLYGON(object_polygon** p_poly)
+object_polygon* ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_node)
 {
-	object_polygon *searcher = *p_poly;
-	while (searcher->next != NULL)
-		searcher = searcher->next;
-	searcher->next = (object_polygon*)malloc(sizeof(object_polygon));
-	searcher->next->prev = searcher;
-	searcher->next->next = NULL;
-	searcher->next->path = NULL;
-	return (searcher->next);
+	object_polygon *new_node;
+	new_node = (object_polygon*)malloc(sizeof(object_polygon));
+	new_node->next = *t_p_poly;
+	new_node->prev = (*t_p_poly)->prev;
+	new_node->path = NULL;
+	(*t_p_poly)->prev->next = new_node;
+	(*t_p_poly)->prev = new_node;
+	
+	*recent_node = new_node;
 }
 
 void UNDO_PEN(object_polygon* p_poly, HWND hwnd)
@@ -124,15 +138,8 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 	{
 		if (sx > x)
 		{
-			int temp;
-			temp = sx;
-			sx = x;
-			x = temp;
-
-			temp = sy;
-			sy = y;
-			y = temp;
-			py = y;
+			swaping(&sx, &x);
+			swaping(&sy, &y);
 		}
 		py = sy;
 
@@ -163,15 +170,8 @@ void Drawing_b_LINE(HDC hdc, int sx, int sy, int x, int y, COLORREF colour, obje
 	{
 		if (sy > y)
 		{
-			int temp;
-			temp = sy;
-			sy = y;
-			y = temp;
-			
-			temp = sx;
-			sx = x;
-			x = temp;
-			px = x;
+			swaping(&sx, &x);
+			swaping(&sy, &y);
 		}
 		px = sx;
 
@@ -205,17 +205,11 @@ void Drawing_b_RECT(HDC hdc, int sx, int sy, int fx, int fy, COLORREF colour, ob
 {
 	if (sx > fx)
 	{
-		int temp;
-		temp = sx;
-		sx = fx;
-		fx = temp;
+		swaping(&sx, &fx);
 	}
 	if (sy > fy)
 	{
-		int temp;
-		temp = sy;
-		sy = fy;
-		fy = temp;
+		swaping(&sy, &fy);
 	}
 	if (sx != fx && fy != sy)
 	{

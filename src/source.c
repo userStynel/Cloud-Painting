@@ -17,11 +17,12 @@ LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CSZPROC(HWND, UINT, WPARAM, LPARAM);
 
+BOOL check_login = FALSE;
 COLORREF gColor = RGB(255, 255, 255);
 HINSTANCE hinstance;
-BOOL check_login = FALSE;
 int now_mode = 1;
 object_polygon* head_saving_path;
+object_polygon* tail_saving_path;
 object_polygon* recent_node;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
@@ -35,9 +36,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 	wc.lpfnWndProc = WndProc;
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	RegisterClassW(&wc);
-
-	head_saving_path = (object_polygon*)malloc(sizeof(object_polygon));
-	INIT_POLYGON(&head_saving_path);
+	INIT_POLYGON(&head_saving_path, &tail_saving_path);
 
 	CreateWindowW(wc.lpszClassName, L"CLOUDY PEN: beta 0.0", 
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -76,7 +75,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == MODE_REDO)
 		{
-			if (recent_node -> next != NULL)
+			if (recent_node->next != tail_saving_path)
 			{
 				recent_node = recent_node->next;
 				REDO_PEN(recent_node, hwnd);
@@ -124,11 +123,9 @@ LRESULT CALLBACK COLORPanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	HPEN hpen;
 	static int sx, sy;
 	static int oldx, oldy;
 	static BOOL bnowDraw = FALSE;
-	static object_polygon* new_node = NULL;
 
 	switch (msg) 
 	{
@@ -139,32 +136,17 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		oldy = sy;
 		bnowDraw = TRUE;
 		hdc = GetDC(hwnd);
-		if (head_saving_path->next->path == NULL)
-		{
-			if (now_mode != MODE_FILL)
-				ADD_PATH(head_saving_path->next, sx, sy, GetPixel(hdc, sx, sy), gColor);
-			else
-				ADD_PATH(head_saving_path->next, -1, -1, GetPixel(hdc, sx, sy), gColor);
-			recent_node = head_saving_path->next;
-		}
-		else
-		{
-			new_node = ADD_POLYGON(&head_saving_path);
-			recent_node = new_node;
-			if (now_mode != MODE_FILL)
-				ADD_PATH(new_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
-			else
-				ADD_PATH(new_node, -1, -1, GetPixel(hdc, sx, sy), gColor);
-		}
+		ADD_POLYGON(&tail_saving_path, &recent_node);
+
+		if (now_mode == MODE_FILL)
+			ADD_PATH(recent_node, -1, -1, GetPixel(hdc, sx, sy), gColor);
+		ADD_PATH(recent_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
+
 		if(now_mode == MODE_FILL)
 		{
 			HBRUSH fillbrush;
 			fillbrush = CreateSolidBrush(gColor);
 			SelectObject(hdc, fillbrush);
-			if (new_node == NULL)
-				ADD_PATH(head_saving_path->next, sx, sy, GetPixel(hdc, sx, sy), gColor);
-			else
-				ADD_PATH(new_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
 			ExtFloodFill(hdc, sx, sy, GetPixel(hdc, sx, sy), FLOODFILLSURFACE);
 			DeleteObject(fillbrush);
 		}
@@ -178,16 +160,11 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		{
 			int now_x, now_y;
 			hdc = GetDC(hwnd);
-			hpen = CreatePen(PS_SOLID, 1, gColor);
-			SelectObject(hdc, hpen);
 			now_x = LOWORD(lParam);
 			now_y = HIWORD(lParam);
 			if (now_mode == MODE_PEN && !(now_x == oldx && now_y == oldy))
 			{
-				if (new_node == NULL)
-					Drawing_b_LINE(hdc, oldx, oldy, now_x, now_y, gColor, head_saving_path->next, TRUE, FALSE);
-				else
-					Drawing_b_LINE(hdc, oldx, oldy, now_x, now_y, gColor, new_node, TRUE, FALSE);
+				Drawing_b_LINE(hdc, oldx, oldy, now_x, now_y, gColor, recent_node, TRUE, FALSE);
 			}
 			else if (now_mode == MODE_RECT || now_mode == MODE_LINE)
 			{
@@ -212,42 +189,23 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			}
 			oldx = now_x;
 			oldy = now_y;
-			DeleteObject(hpen);
 			ReleaseDC(hwnd, hdc);
 		}
 		break;
 	case WM_LBUTTONUP:
 		bnowDraw = FALSE;
 		hdc = GetDC(hwnd);
-		hpen = CreatePen(PS_SOLID, 1, gColor);
 		if(now_mode == MODE_RECT || now_mode == MODE_LINE)
 		{
-			SelectObject(hdc, hpen);
-			SetDCPenColor(hdc, gColor);
 			SelectObject(hdc, GetStockObject(NULL_BRUSH));
 			int now_x, now_y;
 			now_x = LOWORD(lParam);
 			now_y = HIWORD(lParam);
 			if (now_mode == MODE_RECT)
-			{
-				if (new_node == NULL)
-				{
-					Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, head_saving_path->next, TRUE, TRUE);
-				}
-				else
-				{
-					Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, new_node, TRUE, TRUE);
-				}
-			}
+				Drawing_b_RECT(hdc, sx, sy, now_x, now_y, gColor, recent_node, TRUE, TRUE);
 			else if (now_mode == MODE_LINE)
-			{
-				if (new_node == NULL)
-					Drawing_b_LINE(hdc, sx, sy, now_x, now_y, gColor, head_saving_path->next, TRUE, TRUE);
-				else
-					Drawing_b_LINE(hdc, sx, sy, now_x, now_y, gColor, new_node, TRUE, TRUE);
-			}
+				Drawing_b_LINE(hdc, sx, sy, now_x, now_y, gColor, recent_node, TRUE, TRUE);
 		}
-		DeleteObject(hpen);
 		ReleaseDC(hwnd, hdc);
 		break;
 	case WM_DESTROY:
