@@ -1,6 +1,7 @@
 #include "DrawingTools.h"
 
 extern COLORREF gColor;
+extern object_polygon* tail_saving_path;
 
 void swaping(int* x, int* y)
 {
@@ -272,6 +273,37 @@ void Drawing_b_CIRCLE(HDC hdc, int cx, int cy, int radius, COLORREF colour, obje
 		}
 		x++;
 	}
+}
+
+void Deleting_PATH(object_polygon* p_poly)
+{
+	polygon_path* deleting_path=p_poly->path;
+	polygon_path* temp;
+	while (1)
+	{
+		temp = deleting_path->next;
+		free(deleting_path);
+		if (temp == NULL)
+			return;
+		deleting_path = temp;
+	}
+}
+
+void Deleting_After(object_polygon* node)
+{
+	object_polygon *deleting=node->next;
+	object_polygon *temp;
+	while (1)
+	{
+		temp = deleting->next;
+		Deleting_PATH(deleting);
+		free(deleting);
+		if (temp == tail_saving_path)
+			break;
+		deleting = temp;
+	}
+	node->next = tail_saving_path;
+	tail_saving_path->prev = node;
 }
 
 int getRadius(int x1, int y1, int x2, int y2)

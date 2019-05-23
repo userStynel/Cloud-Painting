@@ -12,10 +12,11 @@
 // #pragma comment (lib, "lib_32.dll")
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK COLORPanelProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK COLORPanelProc(HWND, UINT, WPARAM, LPARAM); // 색상 선택하는 창에 관한 함수
+LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM); // 그림 영역에 관한 함수
+LRESULT CALLBACK LoginProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CSZPROC(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK SAVEPROC(HWND, UINT, WPARAM, LPARAM);
 
 BOOL check_login = FALSE;
 COLORREF gColor = RGB(255, 255, 255);
@@ -37,6 +38,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	RegisterClassW(&wc);
 	INIT_POLYGON(&head_saving_path, &tail_saving_path);
+	recent_node = head_saving_path;
 
 	CreateWindowW(wc.lpszClassName, L"CLOUDY PEN: beta 0.0", 
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -89,6 +91,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		if (LOWORD(wParam) == CHANGING_SIZE)
 			CGSZBOX(hwnd, hinstance);
+		if (LOWORD(wParam) == MENU_FILE_SAVE)
+			SAVEBOX(hwnd, hinstance);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -136,6 +140,9 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		oldy = sy;
 		bnowDraw = TRUE;
 		hdc = GetDC(hwnd);
+		if (recent_node->next != tail_saving_path)
+			Deleting_After(recent_node);
+
 		ADD_POLYGON(&tail_saving_path, &recent_node);
 
 		if (now_mode == MODE_FILL)
@@ -218,7 +225,7 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 }
 
 
-LRESULT CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK LoginProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) 
 	{
@@ -257,6 +264,44 @@ LRESULT CALLBACK CSZPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			150, 30, 30, 25, hwnd, (HMENU)1, NULL, NULL);
 		break;
 	case WM_COMMAND:
+		DestroyWindow(hwnd);
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
+		break;
+	}
+	return(DefWindowProc(hwnd, msg, wParam, lParam));
+}
+
+
+LRESULT CALLBACK SAVEPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	HDC hdc;
+	BYTE *bitmapy = (BYTE*)malloc(sizeof(BYTE)*500*350*3);
+	COLORREF color;
+	HBITMAP hbitmap;
+	int check = 0;
+	switch (msg)
+	{
+	case WM_CREATE:
+		CreateWindowW(L"button", L"저장하기",
+			WS_VISIBLE | WS_CHILD,
+			5, 5, 75, 25, hwnd, (HMENU)1, NULL, NULL);
+		break;
+	case WM_COMMAND:
+		hdc = GetDC(hwnd);
+		for (int i = 0; i < 500 * 350; i++)
+		{
+			color = GetPixel(hdc, (i / 350) + 50, (i % 350) + 10);
+			*(bitmapy+ check) = GetBValue(color);
+			*(bitmapy + check+1) = GetRValue(color);
+			*(bitmapy + check+2) = GetGValue(color);
+			check += 3;
+		}
+		hbitmap = CreateBitmap(350, 500, 1, 24, bitmapy);
+		DeleteObject(hbitmap);
+		free(bitmapy);
+		ReleaseDC(hwnd, hdc);
 		DestroyWindow(hwnd);
 		break;
 	case WM_CLOSE:

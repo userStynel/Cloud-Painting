@@ -28,3 +28,5 @@ void REDO_PEN(object_polygon* p_poly, HWND hwnd);
 void INIT_POLYGON(object_polygon** h_p_poly, object_polygon** t_p_poly); // 첫 장면을 할당함
 void ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_node); // 다음 장면을 할당함
 void ADD_PATH(object_polygon* p_poly, int x, int y, COLORREF c, COLORREF d); // 새 경로를 넣음
+void Deleting_PATH(object_polygon* p_poly);
+void Deleting_After(object_polygon* node);

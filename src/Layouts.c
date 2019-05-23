@@ -5,8 +5,9 @@
 extern COLORREF gColor;
 extern LRESULT CALLBACK PAPERPanelProc(HWND, UINT, WPARAM, LPARAM);
 extern LRESULT CALLBACK COLORPanelProc(HWND, UINT, WPARAM, LPARAM);
-extern LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
+extern LRESULT CALLBACK LoginProc(HWND, UINT, WPARAM, LPARAM);
 extern LRESULT CALLBACK CSZPROC(HWND, UINT, WPARAM, LPARAM);
+extern LRESULT CALLBACK SAVEPROC(HWND, UINT, WPARAM, LPARAM);
 
 COLORREF ShowColorDialog(HWND hwnd)
 {
@@ -122,7 +123,7 @@ void LoginBox(HWND hwnd, BOOL* check_login, HINSTANCE hinstance)
 {
 	WNDCLASSEXW wc = { 0 };
 	wc.cbSize = sizeof(WNDCLASSEXW);
-	wc.lpfnWndProc = (WNDPROC)DialogProc;
+	wc.lpfnWndProc = (WNDPROC)LoginProc;
 	wc.hInstance = hinstance;
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	wc.lpszClassName = L"DialogClass";
@@ -144,6 +145,21 @@ void CGSZBOX(HWND hwnd, HINSTANCE hinstance)
 	RegisterClassExW(&wc);
 
 	CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"CGBOXCLASS", L"사이즈 변경",
+		WS_VISIBLE | WS_SYSMENU | WS_CAPTION, 100, 100, 200, 200,
+		NULL, NULL, hinstance, NULL);
+}
+
+void SAVEBOX(HWND hwnd, HINSTANCE hinstance)
+{
+	WNDCLASSEXW wc = { 0 };
+	wc.cbSize = sizeof(WNDCLASSEXW);
+	wc.lpfnWndProc = (WNDPROC)SAVEPROC;
+	wc.hInstance = hinstance;
+	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+	wc.lpszClassName = L"SAVEBOXCLASS";
+	RegisterClassExW(&wc);
+
+	CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"SAVEBOXCLASS", L"저장",
 		WS_VISIBLE | WS_SYSMENU | WS_CAPTION, 100, 100, 200, 200,
 		NULL, NULL, hinstance, NULL);
 }
