@@ -78,9 +78,9 @@ void AddButtons(HWND hwnd, HWND* p_panel, HWND* p_paper)
 		10, y, 25, 25, hwnd, (HMENU)MODE_PEN, NULL, NULL);
 	y += 30;
 
-	CreateWindowW(L"Button", L"E",
+	CreateWindowW(L"Button", L"S",
 		WS_VISIBLE | WS_CHILD,
-		10, y, 25, 25, hwnd, (HMENU)MODE_ERASER, NULL, NULL);
+		10, y, 25, 25, hwnd, (HMENU)MODE_SPOID, NULL, NULL);
 	y += 30;
 
 	CreateWindowW(L"Button", L"L",

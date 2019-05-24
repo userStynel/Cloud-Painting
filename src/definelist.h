@@ -10,7 +10,7 @@
 #define MENU_MULTI_FRIEND 14
 
 #define MODE_PEN 1
-#define MODE_ERASER 2
+#define MODE_SPOID 2
 #define MODE_LINE 3
 #define MODE_RECT 4
 #define MODE_CIRCLE 5

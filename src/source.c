@@ -140,10 +140,17 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		oldy = sy;
 		bnowDraw = TRUE;
 		hdc = GetDC(hwnd);
-		if (recent_node->next != tail_saving_path)
-			Deleting_After(recent_node);
+		if (now_mode != MODE_SPOID)
+		{
+			if (recent_node->next != tail_saving_path)
+				Deleting_After(recent_node);
 
-		ADD_POLYGON(&tail_saving_path, &recent_node);
+			ADD_POLYGON(&tail_saving_path, &recent_node);
+		}
+		else
+		{
+			gColor = GetPixel(hdc, sx, sy);
+		}
 
 		if (now_mode == MODE_FILL)
 			ADD_PATH(recent_node, -1, -1, GetPixel(hdc, sx, sy), gColor);
@@ -153,9 +160,11 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		if(now_mode == MODE_FILL)
 		{
 			HBRUSH fillbrush;
+			HBRUSH oldbrush;
 			fillbrush = CreateSolidBrush(gColor);
-			SelectObject(hdc, fillbrush);
+			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
 			ExtFloodFill(hdc, sx, sy, GetPixel(hdc, sx, sy), FLOODFILLSURFACE);
+			SelectObject(hdc, oldbrush);
 			DeleteObject(fillbrush);
 		}
 		else if(now_mode != MODE_CIRCLE)

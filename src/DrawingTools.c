@@ -90,10 +90,12 @@ void UNDO_PEN(object_polygon* p_poly, HWND hwnd)
 		else
 		{
 			HBRUSH fillbrush;
+			HBRUSH oldbrush;
 			fillbrush = CreateSolidBrush(searcher->prev_colour);
-			SelectObject(hdc, fillbrush);
+			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
 			ExtFloodFill(hdc, searcher->next->x+50, searcher->next->y+10, searcher->next_colour, FLOODFILLSURFACE);
-			DeleteObject(hdc);
+			SelectObject(hdc, oldbrush);
+			DeleteObject(fillbrush);
 			break;
 		}
 		searcher = searcher->next;
@@ -116,9 +118,11 @@ void REDO_PEN(object_polygon* p_poly, HWND hwnd)
 		else
 		{
 			HBRUSH fillbrush;
+			HBRUSH oldbrush;
 			fillbrush = CreateSolidBrush(searcher->next_colour);
-			SelectObject(hdc, fillbrush);
+			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
 			ExtFloodFill(hdc, searcher->next->x + 50, searcher->next->y + 10, searcher->prev_colour, FLOODFILLSURFACE);
+			SelectObject(hdc, oldbrush);
 			DeleteObject(hdc);
 			break;
 		}
