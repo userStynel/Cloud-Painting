@@ -22,6 +22,8 @@ BOOL check_login = FALSE;
 COLORREF gColor = RGB(255, 255, 255);
 HINSTANCE hinstance;
 int now_mode = 1;
+HWND hwndPanel;
+HWND paperPanel;
 object_polygon* head_saving_path;
 object_polygon* tail_saving_path;
 object_polygon* recent_node;
@@ -55,9 +57,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND hwndPanel;
-	static HWND paperPanel;
-
 	switch (msg) 
 	{
 	case WM_CREATE:
@@ -71,7 +70,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			if (recent_node != head_saving_path)
 			{
-				UNDO_PEN(recent_node, hwnd);
+				UNDO_PEN(recent_node, paperPanel);
 				recent_node = recent_node->prev;
 			}
 		}
@@ -80,7 +79,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (recent_node->next != tail_saving_path)
 			{
 				recent_node = recent_node->next;
-				REDO_PEN(recent_node, hwnd);
+				REDO_PEN(recent_node, paperPanel);
 			}
 		}
 		if (LOWORD(wParam) >= MENU_MULTI_CREATE && LOWORD(wParam) <= MENU_MULTI_FRIEND)
@@ -127,6 +126,8 @@ LRESULT CALLBACK COLORPanelProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
+	PAINTSTRUCT ps;
+	object_polygon *ggaz;
 	static int sx, sy;
 	static int oldx, oldy;
 	static BOOL bnowDraw = FALSE;
@@ -151,22 +152,11 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		{
 			gColor = GetPixel(hdc, sx, sy);
 		}
-
-		if (now_mode == MODE_FILL)
-			ADD_PATH(recent_node, -1, -1, GetPixel(hdc, sx, sy), gColor);
 		if(now_mode != MODE_CIRCLE)
 			ADD_PATH(recent_node, sx, sy, GetPixel(hdc, sx, sy), gColor);
 
 		if(now_mode == MODE_FILL)
-		{
-			HBRUSH fillbrush;
-			HBRUSH oldbrush;
-			fillbrush = CreateSolidBrush(gColor);
-			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
-			ExtFloodFill(hdc, sx, sy, GetPixel(hdc, sx, sy), FLOODFILLSURFACE);
-			SelectObject(hdc, oldbrush);
-			DeleteObject(fillbrush);
-		}
+			b_Filling(hdc, sx, sy, gColor, GetPixel(hdc, sx, sy), 0, 0, 0, recent_node);
 		else if(now_mode != MODE_CIRCLE)
 			SetPixel(hdc, sx, sy, gColor);
 		ReleaseDC(hwnd, hdc);
@@ -229,6 +219,20 @@ LRESULT CALLBACK PAPERPanelProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	
+	case WM_PAINT:
+		hdc = BeginPaint(hwnd, &ps);
+		ggaz = head_saving_path;
+		while (1)
+		{
+			ggaz = ggaz->next;
+			if (ggaz == tail_saving_path || ggaz == recent_node->next)
+				break;
+			else
+				REDO_PEN(ggaz, hwnd);
+		}
+		EndPaint(hwnd, &ps);
+		break;
 	}
 	return(DefWindowProc(hwnd, msg, wParam, lParam));
 }
@@ -285,10 +289,11 @@ LRESULT CALLBACK CSZPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK SAVEPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	HDC hdc;
-	BYTE *bitmapy = (BYTE*)malloc(sizeof(BYTE)*500*350*3);
+	HDC hdc, memDC;
+	OPENFILENAME ofn;
+	HBITMAP hBit, oldBit;
 	COLORREF color;
-	HBITMAP hbitmap;
+	TCHAR lpstrFile[MAX_PATH] = TEXT("");
 	int check = 0;
 	switch (msg)
 	{
@@ -298,20 +303,27 @@ LRESULT CALLBACK SAVEPROC(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			5, 5, 75, 25, hwnd, (HMENU)1, NULL, NULL);
 		break;
 	case WM_COMMAND:
-		hdc = GetDC(hwnd);
-		for (int i = 0; i < 500 * 350; i++)
+		hdc = GetDC(paperPanel);
+		memDC = CreateCompatibleDC(hdc);
+		hBit = CreateCompatibleBitmap(hdc, 500, 350);
+		oldBit = (HBITMAP)SelectObject(memDC, hBit);
+		BitBlt(memDC, 0, 0, 500, 350, hdc, 0, 0, SRCCOPY);
+		SelectObject(memDC, oldBit);
+		DeleteObject(hdc);
+		DeleteObject(memDC);
+		memset(&ofn, 0, sizeof(OPENFILENAME));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = hwnd;
+		ofn.lpstrFilter = TEXT("Bmp File(*Bmp)\0");
+		ofn.lpstrFile = lpstrFile;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrDefExt = TEXT("bmp");
+		ofn.lpstrTitle = TEXT("내마음속에저장");
+		if (GetOpenFileName(&ofn) != 0)
 		{
-			color = GetPixel(hdc, (i / 350) + 50, (i % 350) + 10);
-			*(bitmapy+ check) = GetBValue(color);
-			*(bitmapy + check+1) = GetRValue(color);
-			*(bitmapy + check+2) = GetGValue(color);
-			check += 3;
+			HBITMAP2BMP(hBit, ofn.lpstrFile);
 		}
-		hbitmap = CreateBitmap(350, 500, 1, 24, bitmapy);
-		DeleteObject(hbitmap);
-		free(bitmapy);
-		ReleaseDC(hwnd, hdc);
-		DestroyWindow(hwnd);
+		DeleteObject(hBit);
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd);

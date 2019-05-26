@@ -20,6 +20,9 @@ void Drawing_b_CIRCLE(HDC hdc, int cx, int cy, int radius, COLORREF colour, obje
 	BOOL reverse);
 void Drawing_b_RECT(HDC hdc, int sx, int sy, int fx, int fy, COLORREF colour, object_polygon* p_poly, BOOL save,
 	BOOL reverse);
+int searching_left(HDC hdc, int sx, int sy, COLORREF b_color);
+int searching_right(HDC hdc, int sx, int sy, COLORREF b_color);
+int b_Filling(HDC hdc, int sx, int sy, COLORREF colour, COLORREF b_color, int pl, int pr, int flag, object_polygon* p_poly);
 void ERASER();
 
 void UNDO_PEN(object_polygon* p_poly, HWND hwnd);
@@ -30,3 +33,4 @@ void ADD_POLYGON(object_polygon** t_p_poly, object_polygon** recent_node); // 다
 void ADD_PATH(object_polygon* p_poly, int x, int y, COLORREF c, COLORREF d); // 새 경로를 넣음
 void Deleting_PATH(object_polygon* p_poly);
 void Deleting_After(object_polygon* node);
+void HBITMAP2BMP(HBITMAP hbit, char *Path);

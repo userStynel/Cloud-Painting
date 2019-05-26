@@ -86,14 +86,14 @@ void UNDO_PEN(object_polygon* p_poly, HWND hwnd)
 		x = searcher->x;
 		y = searcher->y;
 		if(x >= 0 && y >= 0)
-			SetPixel(hdc, x + 50, y + 10, searcher->prev_colour);
+			SetPixel(hdc, x, y, searcher->prev_colour);
 		else
 		{
 			HBRUSH fillbrush;
 			HBRUSH oldbrush;
 			fillbrush = CreateSolidBrush(searcher->prev_colour);
 			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
-			ExtFloodFill(hdc, searcher->next->x+50, searcher->next->y+10, searcher->next_colour, FLOODFILLSURFACE);
+			ExtFloodFill(hdc, searcher->next->x, searcher->next->y, searcher->next_colour, FLOODFILLSURFACE);
 			SelectObject(hdc, oldbrush);
 			DeleteObject(fillbrush);
 			break;
@@ -114,14 +114,14 @@ void REDO_PEN(object_polygon* p_poly, HWND hwnd)
 		x = searcher->x;
 		y = searcher->y;
 		if(x>=0 && y>=0)
-			SetPixel(hdc, x + 50, y + 10, searcher->next_colour);
+			SetPixel(hdc, x, y, searcher->next_colour);
 		else
 		{
 			HBRUSH fillbrush;
 			HBRUSH oldbrush;
 			fillbrush = CreateSolidBrush(searcher->next_colour);
 			oldbrush = (HBRUSH)SelectObject(hdc, fillbrush);
-			ExtFloodFill(hdc, searcher->next->x + 50, searcher->next->y + 10, searcher->prev_colour, FLOODFILLSURFACE);
+			ExtFloodFill(hdc, searcher->next->x, searcher->next->y, searcher->prev_colour, FLOODFILLSURFACE);
 			SelectObject(hdc, oldbrush);
 			DeleteObject(hdc);
 			break;
@@ -313,4 +313,132 @@ void Deleting_After(object_polygon* node)
 int getRadius(int x1, int y1, int x2, int y2)
 {
 	return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+}
+
+int searching_left(HDC hdc, int sx, int sy, COLORREF b_color)
+{
+	COLORREF checker;
+	checker = GetPixel(hdc, sx, sy);
+	while (checker == b_color && sx >= 0)
+		checker = GetPixel(hdc, --sx, sy);
+	sx++;
+	return sx;
+}
+
+int searching_right(HDC hdc, int sx, int sy, COLORREF b_color)
+{
+	COLORREF checker;
+	checker = GetPixel(hdc, sx, sy);
+	while (checker == b_color && sx >= 0)
+		checker = GetPixel(hdc, ++sx, sy);
+	sx--;
+	return sx;
+}
+
+int b_Filling(HDC hdc, int sx, int sy, COLORREF colour, COLORREF b_color, int pl, int pr, int flag, object_polygon* p_poly)
+{
+	COLORREF color;
+	int xleft, xright;
+	xleft = searching_left(hdc, sx, sy, b_color);
+	xright = searching_right(hdc, sx, sy, b_color);
+	Drawing_b_LINE(hdc, xleft, sy, xright, sy, colour, p_poly, TRUE, FALSE);
+	if (flag == 1)
+	{
+		for (int x = xleft; x < pl; x++)
+		{
+			color = GetPixel(hdc, x, sy - 1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy - 1, colour, b_color, xleft, xright, 2, p_poly);
+		}
+		for (int x = pr + 1; x <= xright; x++)
+		{
+			color = GetPixel(hdc, x, sy - 1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy - 1, colour, b_color, xleft, xright, 2, p_poly);
+		}
+	}
+	else
+	{
+		for (int x = xleft; x <= xright; x++)
+		{
+			color = GetPixel(hdc, x, sy-1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy - 1, colour, b_color, xleft, xright, 2, p_poly);
+		}
+	}
+
+	if (flag == 2)
+	{
+		for (int x = xleft; x < pl; x++)
+		{
+			color = GetPixel(hdc, x, sy + 1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy + 1, colour, b_color, xleft, xright, 1, p_poly);
+		}
+		for (int x = pr + 1; x <= xright; x++)
+		{
+			color = GetPixel(hdc, x, sy + 1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy + 1, colour, b_color, xleft, xright, 1, p_poly);
+		}
+	}
+	else
+	{
+		for (int x = xleft; x <= xright; x++)
+		{
+			color = GetPixel(hdc, x, sy + 1);
+			if (color == b_color)
+				x = b_Filling(hdc, x, sy + 1, colour, b_color, xleft, xright, 1, p_poly);
+		}
+	}
+	return xright;
+}
+
+void HBITMAP2BMP(HBITMAP hbit, char *Path)
+{
+	BITMAPFILEHEADER fh;
+	BITMAPINFOHEADER ih;
+	BITMAP bit;
+	BITMAPINFO *pih;
+	int PalSize;
+	HANDLE hFile;
+	DWORD dwWritten, Size;
+	HDC hdc;
+	hdc = GetDC(NULL);
+	GetObject(hbit, sizeof(BITMAP), &bit);
+	ih.biSize = sizeof(BITMAPINFOHEADER);
+	ih.biWidth = bit.bmWidth;
+	ih.biHeight = bit.bmHeight;
+	ih.biPlanes = 1;
+	ih.biBitCount = bit.bmPlanes*bit.bmBitsPixel;
+	if (ih.biBitCount > 8) ih.biBitCount = 24;
+	ih.biCompression = BI_RGB;
+	ih.biSizeImage = 0;
+	ih.biXPelsPerMeter = 0;
+	ih.biYPelsPerMeter = 0;
+	ih.biClrUsed = 0;
+	ih.biClrImportant = 0;
+	PalSize = (ih.biBitCount == 24 ? 0 : 1 << ih.biBitCount) * sizeof(RGBQUAD);
+	pih = (BITMAPINFO *)malloc(ih.biSize + PalSize);
+	pih->bmiHeader = ih;
+	GetDIBits(hdc, hbit, 0, bit.bmHeight, NULL, pih, DIB_RGB_COLORS);
+	ih = pih->bmiHeader;
+	if (ih.biSizeImage == 0) 
+	{
+		ih.biSizeImage = ((((ih.biWidth*ih.biBitCount) + 31) & ~31) >> 3) * ih.biHeight;
+	}
+	Size = ih.biSize + PalSize + ih.biSizeImage;
+	pih = (BITMAPINFO *)realloc(pih, Size);
+	GetDIBits(hdc, hbit, 0, bit.bmHeight, (PBYTE)pih + ih.biSize + PalSize, pih, DIB_RGB_COLORS);
+	fh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + PalSize;
+	fh.bfReserved1 = 0;
+	fh.bfReserved2 = 0;
+	fh.bfSize = Size + sizeof(BITMAPFILEHEADER);
+	fh.bfType = 0x4d42;
+	hFile = CreateFile(Path, GENERIC_WRITE, 0, NULL,
+		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	WriteFile(hFile, &fh, sizeof(fh), &dwWritten, NULL);
+	WriteFile(hFile, pih, Size, &dwWritten, NULL);
+	ReleaseDC(NULL, hdc);
+	CloseHandle(hFile);
 }
